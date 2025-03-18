@@ -1,9 +1,12 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const Book = require('./models/book');
+
+const userRoutes = require('./routes/user'); 
+const bookRoutes = require('./routes/book'); // Ajout du routeur pour les livres
 
 const app = express();
 
+// Connexion à MongoDB
 mongoose.connect('mongodb+srv://Dorianseb:Couscous2491@cluster0.8c5as.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0')
   .then(() => console.log('Connexion à MongoDB réussie !'))
   .catch(err => console.log('Connexion à MongoDB échouée !', err));
@@ -18,6 +21,9 @@ app.use((req, res, next) => {
   next();
 });
 
+// Enregistrement des routes sous /api/auth et /api/books
+app.use('/api/auth', userRoutes); 
+app.use('/api/books', bookRoutes); 
 
-// Exportation de l'application pour pouvoir l'utiliser dans server.js
+// Exportation de l'application
 module.exports = app;
