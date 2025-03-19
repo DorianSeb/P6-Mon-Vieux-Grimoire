@@ -1,7 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 
-const userRoutes = require('./routes/user'); 
+const userRoutes = require('./routes/user'); // Routes d'authentification
 const bookRoutes = require('./routes/book'); // Ajout du routeur pour les livres
 
 const app = express();
