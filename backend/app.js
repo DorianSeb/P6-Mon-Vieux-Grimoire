@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 
 const userRoutes = require('./routes/user'); // Routes d'authentification
 const bookRoutes = require('./routes/book'); // Ajout du routeur pour les livres
+const path = require('path'); // Importation du module path de Node.js
 
 const app = express();
 
@@ -22,6 +23,7 @@ app.use((req, res, next) => {
 });
 
 // Enregistrement des routes sous /api/auth et /api/books
+app.use('/images', express.static(path.join(__dirname, 'images'))); // Sert les fichiers statiques depuis le dossier "images"
 app.use('/api/auth', userRoutes); 
 app.use('/api/books', bookRoutes); 
 
