@@ -120,4 +120,52 @@ exports.deleteBook = (req, res, next) => {
       });
     })
     .catch(error => res.status(500).json({ error }));
+
+
+    // Contrôleur pour ajouter une notation à un livre
+exports.rateBook = async (req, res) => {
+  try {
+    // On récupère l'ID du livre à partir des paramètres d'URL (/books/:id/rating)
+    const bookId = req.params.id;
+
+    // On récupère l'userId et la note (rating) envoyés par le client dans le body de la requête
+    const { userId, rating } = req.body;
+
+    // Si la note est en dehors de l’intervalle autorisé, on renvoie une erreur
+    if (rating < 0 || rating > 5) {
+      return res.status(400).json({ message: "La note doit être entre 0 et 5." });
+    }
+
+    // On cherche le livre dans la base de données avec son ID
+    const book = await Book.findById(bookId);
+
+    // Si le livre n'existe pas, on renvoie une erreur
+    if (!book) {
+      return res.status(404).json({ message: "Livre non trouvé." });
+    }
+
+    // On vérifie si l’utilisateur a déjà noté ce livre
+    const alreadyRated = book.ratings.find(rating => rating.userId === userId);
+    if (alreadyRated) {
+      return res.status(400).json({ message: "Vous avez déjà noté ce livre." });
+    }
+
+    // Si tout est ok, on ajoute la nouvelle note dans le tableau ratings
+    book.ratings.push({ userId, grade: rating });
+
+    // On recalcule la note moyenne à partir de toutes les notes
+    const total = book.ratings.reduce((sum, r) => sum + r.grade, 0);
+    book.averageRating = total / book.ratings.length;
+
+    // On enregistre les modifications dans la base de données
+    await book.save();
+
+    // On renvoie le livre mis à jour en réponse
+    res.status(200).json(book);
+
+  } catch (error) {
+    // En cas d'erreur inattendue, on renvoie une erreur 500 (erreur serveur)
+    res.status(500).json({ error });
+  }
+};
 };
