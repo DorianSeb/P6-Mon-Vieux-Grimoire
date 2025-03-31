@@ -12,6 +12,7 @@ router.delete('/:id', auth, bookCtrl.deleteBook); // Seul l’auteur du livre pe
 
 // Routes accessibles à tous
 router.get('/', bookCtrl.getAllBooks); // Voir tous les livres (pas besoin d'être connecté)
+router.get('/bestrating', bookCtrl.getBestRatedBooks);
 router.get('/:id', bookCtrl.getOneBook); // Voir un livre en détail (pas besoin d'être connecté)
 
 module.exports = router;

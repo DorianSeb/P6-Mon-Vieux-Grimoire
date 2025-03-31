@@ -1,9 +1,9 @@
-const bcrypt = require('bcrypt'); // Importer bcrypt pour hacher les mots de passe
-const jwt = require('jsonwebtoken'); // Importer jsonwebtoken pour créer des tokens
-const User = require('../models/user'); // Importer le modèle User
+const bcrypt = require('bcrypt'); 
+const jwt = require('jsonwebtoken');
+const User = require('../models/user'); 
 
 exports.signup = (req, res, next) => {
-  bcrypt.hash(req.body.password, 10) // Hashage du mot de passe avec un "sel" de 10 tours
+  bcrypt.hash(req.body.password, 10)
     .then(hash => {
       const user = new User({
         email: req.body.email, // Récupérer l'email du formulaire
@@ -11,7 +11,7 @@ exports.signup = (req, res, next) => {
       });
       user.save()
         .then(() => res.status(201).json({ message: 'Utilisateur créé !' }))
-        .catch(error => res.status(400).json({ error })); // Gérer les erreurs
+        .catch(error => res.status(400).json({ error }));
     })
     .catch(error => res.status(500).json({ error })); // Erreur serveur
 };

@@ -18,36 +18,36 @@ exports.getOneBook = (req, res) => {
 
 // Ajouter un livre
 exports.createBook = async (req, res, next) => {
-  // 🔄 On transforme la chaîne JSON envoyée par le front en objet JS
+  // On transforme la chaîne JSON envoyée par le front en objet JS
   const bookObject = JSON.parse(req.body.book);
-  delete bookObject._id;       // ❌ On supprime l’_id (on ne veut pas qu’il vienne du client)
-  delete bookObject.userId;    // ❌ On ignore le userId transmis (sécurité)
+  delete bookObject._id;       // On supprime l’_id (on ne veut pas qu’il vienne du client)
+  delete bookObject.userId;    // On ignore le userId transmis (sécurité)
 
   const originalFilename = req.file.filename;         // nom de l’image originale
-  const outputFilename = `optimized_${originalFilename.split('.')[0]}.webp`; // nom de l’image optimisée
+  const outputFilename = `optimized_${Date.now()}_${originalFilename.split('.')[0]}.webp`;// nom de l’image optimisée
   const outputPath = `images/${outputFilename}`;      // chemin vers l’image optimisée
 
   try {
-    // 🔧 Traitement de l’image avec Sharp
+    // Traitement de l’image avec Sharp
     await sharp(req.file.path)                 // le fichier temporaire qui vient d’être uploadé
-      .resize({ width: 600 })                  // ↔️ redimensionne à 600px de large
-      .webp({ quality: 80 })                   // 📦 compresse à 80% de qualité
-      .toFile(outputPath);                     // 💾 enregistre dans le dossier /images
+      .resize({ width: 600 })                  
+      .webp({ quality: 80 })                  
+      .toFile(outputPath);                     // enregistre dans le dossier /images
 
-    // 🗑️ Supprime l’image d’origine (non optimisée)
+    // Supprime l’image d’origine (non optimisée)
     fs.unlinkSync(req.file.path);
 
-    // 📘 Création du livre avec image optimisée
+    // Création du livre avec image optimisée
     const book = new Book({
-      ...bookObject,                             // ✨ Toutes les données du formulaire
-      userId: req.auth.userId,                   // ✅ Ajout de l'userId depuis le token
-      imageUrl: `${req.protocol}://${req.get('host')}/images/${outputFilename}` // 🔗 URL complète vers l’image
+      ...bookObject,                             // Toutes les données du formulaire
+      userId: req.auth.userId,                   
+      imageUrl: `${req.protocol}://${req.get('host')}/images/${outputFilename}` // URL complète vers l’image
     });
 
-    await book.save(); // 💾 Sauvegarde en base de données
+    await book.save(); // Sauvegarde en base de données
     res.status(201).json({ message: 'Livre enregistré avec image optimisée !' });
   } catch (error) {
-    res.status(500).json({ error }); // ❌ Gestion des erreurs
+    res.status(500).json({ error }); // Gestion des erreurs
   }
 };
 
@@ -58,7 +58,7 @@ exports.modifyBook = async (req, res) => {
 
   try {
     if (req.file) {
-      // 📦 Si une nouvelle image est envoyée, on l’optimise avec Sharp
+      // Si une nouvelle image est envoyée, on l’optimise avec Sharp
       const originalFilename = req.file.filename;
       const outputFilename = `optimized_${Date.now()}_${originalFilename.split('.')[0]}.webp`;
       const outputPath = `images/${outputFilename}`;
@@ -68,27 +68,27 @@ exports.modifyBook = async (req, res) => {
         .webp({ quality: 80 })
         .toFile(outputPath);
 
-      // 🗑️ On supprime l’image d’origine non optimisée
+      // On supprime l’image d’origine non optimisée
       fs.unlinkSync(req.file.path);
 
-      // 🔍 On récupère le livre pour supprimer l’ancienne image
+      // On récupère le livre pour supprimer l’ancienne image
       const existingBook = await Book.findOne({ _id: req.params.id });
       if (existingBook && existingBook.imageUrl) {
         const oldFilename = existingBook.imageUrl.split('/images/')[1];
         fs.unlink(`images/${oldFilename}`, () => {});
       }
 
-      // 📦 On crée l’objet livre avec nouvelle image optimisée
+      // On crée l’objet livre avec nouvelle image optimisée
       bookObject = {
         ...JSON.parse(req.body.book),
         imageUrl: `${req.protocol}://${req.get('host')}/images/${outputFilename}`
       };
     } else {
-      // 🎯 Aucune image changée
+      // Aucune image changée
       bookObject = { ...req.body };
     }
 
-    // 🔐 On supprime le userId envoyé par le front
+    // On supprime le userId envoyé par le front
     delete bookObject.userId;
 
     const book = await Book.findOne({ _id: req.params.id });
@@ -120,7 +120,7 @@ exports.deleteBook = (req, res, next) => {
       });
     })
     .catch(error => res.status(500).json({ error }));
-
+  }
 
     // Contrôleur pour ajouter une notation à un livre
 exports.rateBook = async (req, res) => {
@@ -168,4 +168,12 @@ exports.rateBook = async (req, res) => {
     res.status(500).json({ error });
   }
 };
+// Récupérer les 3 livres ayant la meilleure note moyenne
+exports.getBestRatedBooks = async (req, res) => {
+  try {
+    const bestBooks = await Book.find().sort({ averageRating: -1 }).limit(3);
+    res.status(200).json(bestBooks);
+  } catch (error) {
+    res.status(500).json({ error });
+  }
 };
