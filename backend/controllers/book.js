@@ -29,10 +29,10 @@ exports.createBook = async (req, res, next) => {
 
   try {
     // Traitement de l’image avec Sharp
-    await sharp(req.file.path)                 // le fichier temporaire qui vient d’être uploadé
+    await sharp(req.file.path)
       .resize({ width: 600 })                  
       .webp({ quality: 80 })                  
-      .toFile(outputPath);                     // enregistre dans le dossier /images
+      .toFile(outputPath); // enregistre dans le dossier /images
 
     // Supprime l’image d’origine (non optimisée)
     fs.unlinkSync(req.file.path);
@@ -106,15 +106,18 @@ exports.modifyBook = async (req, res) => {
 
 // Supprimer un livre
 exports.deleteBook = (req, res, next) => {
-  Book.findOne({ _id: req.params.id }) // On cherche le livre dans la base
+  Book.findOne({ _id: req.params.id }) 
     .then(book => {
-      if (book.userId !== req.auth.userId) { // Vérifie si l'utilisateur est bien le créateur
+      if (book.userId !== req.auth.userId) { 
         return res.status(401).json({ message: 'Non autorisé à supprimer ce livre !' });
       }
-
-      const filename = book.imageUrl.split('/images/')[1]; // On récupère juste le nom du fichier
-      fs.unlink(`images/${filename}`, () => { // On supprime le fichier image du dossier "images"
-        Book.deleteOne({ _id: req.params.id }) // Ensuite on supprime le livre de la base
+      // On supprime l’image du livre
+      // On récupère le nom du fichier à partir de l’URL
+      // On utilise split pour séparer l’URL et récupérer juste le nom du fichier
+      // On utilise le module fs pour supprimer le fichier
+      const filename = book.imageUrl.split('/images/')[1]; 
+      fs.unlink(`images/${filename}`, () => { 
+        Book.deleteOne({ _id: req.params.id }) 
           .then(() => res.status(200).json({ message: 'Livre supprimé avec succès !' }))
           .catch(error => res.status(400).json({ error }));
       });
@@ -125,31 +128,24 @@ exports.deleteBook = (req, res, next) => {
     // Contrôleur pour ajouter une notation à un livre
 exports.rateBook = async (req, res) => {
   try {
-    // On récupère l'ID du livre à partir des paramètres d'URL (/books/:id/rating)
     const bookId = req.params.id;
 
     // On récupère l'userId et la note (rating) envoyés par le client dans le body de la requête
     const { userId, rating } = req.body;
-
-    // Si la note est en dehors de l’intervalle autorisé, on renvoie une erreur
     if (rating < 0 || rating > 5) {
       return res.status(400).json({ message: "La note doit être entre 0 et 5." });
     }
 
     // On cherche le livre dans la base de données avec son ID
     const book = await Book.findById(bookId);
-
-    // Si le livre n'existe pas, on renvoie une erreur
     if (!book) {
       return res.status(404).json({ message: "Livre non trouvé." });
     }
-
     // On vérifie si l’utilisateur a déjà noté ce livre
     const alreadyRated = book.ratings.find(rating => rating.userId === userId);
     if (alreadyRated) {
       return res.status(400).json({ message: "Vous avez déjà noté ce livre." });
     }
-
     // Si tout est ok, on ajoute la nouvelle note dans le tableau ratings
     book.ratings.push({ userId, grade: rating });
 
@@ -157,14 +153,10 @@ exports.rateBook = async (req, res) => {
     const total = book.ratings.reduce((sum, r) => sum + r.grade, 0);
     book.averageRating = total / book.ratings.length;
 
-    // On enregistre les modifications dans la base de données
     await book.save();
-
-    // On renvoie le livre mis à jour en réponse
     res.status(200).json(book);
 
   } catch (error) {
-    // En cas d'erreur inattendue, on renvoie une erreur 500 (erreur serveur)
     res.status(500).json({ error });
   }
 };
