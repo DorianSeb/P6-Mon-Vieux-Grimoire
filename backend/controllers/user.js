@@ -2,6 +2,8 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user'); 
 
+require('dotenv').config(); 
+
 exports.signup = (req, res, next) => {
   bcrypt.hash(req.body.password, 10)
     .then(hash => {
@@ -29,10 +31,11 @@ exports.login = (req, res) => {
                     }
                     res.status(200).json({
                         userId: user._id,
+
                         token: jwt.sign(
-                            { userId: user._id }, // Payload (données stockées dans le token)
-                            'RANDOM_TOKEN_SECRET', // Clé secrète de chiffrement (à sécuriser dans .env plus tard)
-                            { expiresIn: '24h' } // Expiration du token après 24h
+                          { userId: user._id },
+                          process.env.JWT_SECRET,
+                          { expiresIn: '24h' }
                         )
                     });
                 })

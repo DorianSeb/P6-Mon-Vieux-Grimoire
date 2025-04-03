@@ -4,11 +4,12 @@ const mongoose = require('mongoose');
 const userRoutes = require('./routes/user'); // Routes d'authentification
 const bookRoutes = require('./routes/book'); // Ajout du routeur pour les livres
 const path = require('path'); // Importation du module path de Node.js
+require('dotenv').config(); 
 
 const app = express();
 
 // Connexion à MongoDB
-mongoose.connect('mongodb+srv://Dorianseb:Couscous2491@cluster0.8c5as.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0')
+mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('Connexion à MongoDB réussie !'))
   .catch(err => console.log('Connexion à MongoDB échouée !', err));
 
